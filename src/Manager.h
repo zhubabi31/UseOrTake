@@ -1,3 +1,4 @@
+// Modified for the SkyPrompt fork, 2026-11-12.
 #pragma once
 
 #include "Action.h"
@@ -24,6 +25,7 @@ public:
 	void               SetHotkeyHeld(bool a_held) { keyHeld = a_held; }
 
 	[[nodiscard]] float GetKeyHeldDuration() const { return keyHeldDuration; }
+	[[nodiscard]] bool UseSkyPrompt() const { return useSkyPrompt; }
 
 private:
 	void UpdateINISettings();
@@ -47,6 +49,7 @@ private:
 	INI::Setting<std::uint32_t> hotKey{ "Settings"sv, "Alternate action hotkey"sv, "iAlternateActionKey"sv, 42 };
 	INI::Setting<std::uint32_t> hotKeyGamePad{ "Settings"sv, "Alternate action hotkey (Gamepad)"sv, "iAlternateActionKeyGamePad"sv, 0 };
 	INI::Setting<float>         keyHeldDuration{ "Settings"sv, "Hotkey hold duration"sv, "fHotkeyHoldDuration"sv, 0.7f };
+	INI::Setting<bool>          useSkyPrompt{ "Settings"sv, "Use SkyPrompt"sv, "bUseSkyPrompt"sv, true };
 
 	std::atomic_bool keyPressed{ false };
 	std::atomic_bool keyHeld{ false };

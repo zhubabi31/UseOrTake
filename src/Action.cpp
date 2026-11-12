@@ -1,3 +1,4 @@
+// Modified for the SkyPrompt fork, 2026-11-12.
 #include "Action.h"
 
 Action::Action(std::string_view a_section, std::string a_label) :
@@ -41,6 +42,40 @@ std::string Action::GetActionLabel(RE::TESObjectREFR* a_activator, RE::TESBoundO
 	return get_take_label(a_activator);
 }
 
+const std::string& Action::GetUseLabel(RE::TESBoundObject*) const
+{
+	return GetPrimaryLabel();
+}
+
+void Action::Perform(RE::Actor* a_actor, RE::TESBoundObject* a_base, bool a_secondary)
+{
+	if (!a_secondary) {
+		RE::ActorEquipManager::GetSingleton()->EquipObject(a_actor, a_base);
+		return;
+	}
+
+	switch (a_base->GetFormType()) {
+	case RE::FormType::Scroll:
+		if (const auto scroll = a_base->As<RE::ScrollItem>()) {
+			if (const auto caster = a_actor->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
+				caster->CastSpellImmediate(scroll, false, a_actor, 1.0f, false, 0.0f, nullptr);
+				a_actor->RemoveItem(scroll, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			} else {
+				REX::WARN("Cannot cast scroll {:08X}: actor has no instant spell caster", scroll->GetFormID());
+			}
+		}
+		break;
+	case RE::FormType::Weapon:
+		RE::ActorEquipManager::GetSingleton()->EquipObject(a_actor, a_base);
+		if (const RE::ActorState* actorState = a_actor->As<RE::ActorState>(); actorState && !actorState->IsWeaponDrawn()) {
+			a_actor->DrawWeaponMagicHands(true);
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 SecondaryAction::SecondaryAction(std::string_view a_section, std::string a_label, std::string a_secondaryLabel) :
 	Action(a_section, std::move(a_label)),
 	secondaryActionLabel(a_section, "Alternate secondary action label"sv, "sAlternateSecondaryActionLabel"sv, std::move(a_secondaryLabel))
@@ -57,6 +92,11 @@ std::string SecondaryAction::GetActionLabel(RE::TESObjectREFR* a_activator, RE::
 	return get_take_label(a_activator);
 }
 
+const std::string& SecondaryAction::GetUseLabel(RE::TESBoundObject* a_base) const
+{
+	return a_base->Is(RE::FormType::Scroll) ? static_cast<const std::string&>(secondaryActionLabel) : GetPrimaryLabel();
+}
+
 AlchemyAction::AlchemyAction(std::string_view a_section, std::string a_label, std::string a_foodLabel, std::string a_poisonLabel) :
 	Action(a_section, std::move(a_label)),
 	foodActionLabel(a_section, "Alternate action label (Food)"sv, "sAlternateActionLabelFood"sv, std::move(a_foodLabel)),
@@ -69,6 +109,11 @@ std::string AlchemyAction::GetActionLabel(RE::TESObjectREFR* a_activator, RE::TE
 		return get_alt_action_label(a_activator, GetLabelForAlchType(a_base));
 	}
 	return get_take_label(a_activator);
+}
+
+const std::string& AlchemyAction::GetUseLabel(RE::TESBoundObject* a_base) const
+{
+	return GetLabelForAlchType(a_base);
 }
 
 const std::string& AlchemyAction::GetLabelForAlchType(RE::TESBoundObject* a_base) const

@@ -1,3 +1,4 @@
+# Modified for the SkyPrompt fork, 2026-11-12.
 cmake_minimum_required(VERSION 3.20)
 set(NAME "po3_UseOrTake" CACHE STRING "")
 set(VERSION 1.3.2 CACHE STRING "")
@@ -134,6 +135,8 @@ set(Boost_USE_STATIC_LIBS ON)
 
 # ---- Dependencies ----
 
+find_path(SkyPromptAPI_INCLUDE_DIRS "SkyPrompt/API.hpp" REQUIRED)
+
 if (DEFINED CommonLibPath AND NOT ${CommonLibPath} STREQUAL "" AND IS_DIRECTORY ${CommonLibPath})
 	add_subdirectory(${CommonLibPath} ${CommonLibName})
 else ()
@@ -186,6 +189,8 @@ target_compile_definitions(
 	${PROJECT_NAME}
 	PRIVATE
 		_UNICODE
+		NOMINMAX
+		WIN32_LEAN_AND_MEAN
 )
 
 target_include_directories(
@@ -193,6 +198,7 @@ target_include_directories(
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
+		${SkyPromptAPI_INCLUDE_DIRS}
 )
 
 target_link_libraries(

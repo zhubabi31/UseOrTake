@@ -1,3 +1,4 @@
+// Modified for the SkyPrompt fork, 2026-11-12.
 #pragma once
 
 #include "INI.h"
@@ -19,6 +20,9 @@ public:
 	[[nodiscard]] Type GetDefaultAction() const { return static_cast<Type>(action.GetValue()); }
 
 	[[nodiscard]] virtual std::string GetActionLabel(RE::TESObjectREFR* a_activator, RE::TESBoundObject* a_base, bool a_keyPressed, bool a_keyHeld) const;
+	[[nodiscard]] virtual const std::string& GetUseLabel(RE::TESBoundObject* a_base) const;
+
+	static void Perform(RE::Actor* a_actor, RE::TESBoundObject* a_base, bool a_secondary);
 
 protected:
 	static std::string get_take_label(RE::TESObjectREFR* a_activator);
@@ -42,6 +46,7 @@ public:
 	~SecondaryAction() override = default;
 
 	[[nodiscard]] std::string GetActionLabel(RE::TESObjectREFR* a_activator, RE::TESBoundObject* a_base, bool a_keyPressed, bool a_keyHeld) const override;
+	[[nodiscard]] const std::string& GetUseLabel(RE::TESBoundObject* a_base) const override;
 
 private:
 	INI::Setting<std::string> secondaryActionLabel;
@@ -54,6 +59,7 @@ public:
 	~AlchemyAction() override = default;
 
 	[[nodiscard]] std::string GetActionLabel(RE::TESObjectREFR* a_activator, RE::TESBoundObject* a_base, bool a_keyPressed, bool a_keyHeld) const override;
+	[[nodiscard]] const std::string& GetUseLabel(RE::TESBoundObject* a_base) const override;
 
 private:
 	[[nodiscard]] const std::string& GetLabelForAlchType(RE::TESBoundObject* a_base) const;

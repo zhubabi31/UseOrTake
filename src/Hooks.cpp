@@ -1,3 +1,4 @@
+// Modified for the SkyPrompt fork, 2026-11-12.
 #include "Hooks.h"
 
 #include "Manager.h"
@@ -21,35 +22,6 @@ namespace Hooks
 
 	struct Activate
 	{
-		struct detail
-		{
-			static void do_secondary_action(RE::Actor* a_actor, RE::TESBoundObject* a_base)
-			{
-				switch (a_base->GetFormType()) {
-				case RE::FormType::Scroll:
-					{
-						if (const auto scroll = a_base->As<RE::ScrollItem>()) {
-							if (const auto caster = a_actor->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
-								caster->CastSpellImmediate(scroll, false, a_actor, 1.0f, false, 0.0f, nullptr);
-							}
-							a_actor->RemoveItem(scroll, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-						}
-					}
-					break;
-				case RE::FormType::Weapon:
-					{
-						RE::ActorEquipManager::GetSingleton()->EquipObject(a_actor, a_base);
-						if (const RE::ActorState* actorState = a_actor->As<RE::ActorState>(); actorState && !actorState->IsWeaponDrawn()) {
-							a_actor->DrawWeaponMagicHands(true);
-						}
-					}
-					break;
-				default:
-					break;
-				}
-			};
-		};
-
 		static bool thunk(RE::TESBoundObject* a_this, RE::TESObjectREFR* a_targetRef, RE::TESObjectREFR* a_activatorRef, std::uint8_t a_arg3, RE::TESBoundObject*, std::int32_t a_targetCount)
 		{
 			if (const auto light = a_this->As<RE::TESObjectLIGH>(); light && !light->CanBeCarried()) {
@@ -71,7 +43,7 @@ namespace Hooks
 						case Action::kTake:
 							{
 								if (settings->GetHotkeyHeld() && a_this->Is(RE::FormType::Scroll, RE::FormType::Weapon)) {
-									detail::do_secondary_action(actor, a_this);
+									Action::Perform(actor, a_this, true);
 								} else if (settings->GetHotkeyPressed()) {
 									RE::ActorEquipManager::GetSingleton()->EquipObject(actor, a_this);
 								}
@@ -80,7 +52,7 @@ namespace Hooks
 						case Action::kPrimaryAction:
 							{
 								if (settings->GetHotkeyHeld() && a_this->Is(RE::FormType::Scroll, RE::FormType::Weapon)) {
-									detail::do_secondary_action(actor, a_this);
+									Action::Perform(actor, a_this, true);
 								} else if (!settings->GetHotkeyPressed()) {
 									RE::ActorEquipManager::GetSingleton()->EquipObject(actor, a_this);
 								}
@@ -91,7 +63,7 @@ namespace Hooks
 								if (settings->GetHotkeyHeld()) {
 									RE::ActorEquipManager::GetSingleton()->EquipObject(actor, a_this);
 								} else if (!settings->GetHotkeyPressed()) {
-									detail::do_secondary_action(actor, a_this);
+									Action::Perform(actor, a_this, true);
 								}
 							}
 							break;

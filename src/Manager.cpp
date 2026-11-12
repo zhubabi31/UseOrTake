@@ -1,4 +1,6 @@
+// Modified for the SkyPrompt fork, 2026-11-12.
 #include "Manager.h"
+#include "ObjectPrompts.h"
 
 #include <SimpleIni.h>
 #undef ERROR
@@ -94,6 +96,11 @@ void Manager::UpdateCrosshairs()
 
 RE::BSEventNotifyControl Manager::ProcessEvent(RE::InputEvent* const* a_evn, RE::BSTEventSource<RE::InputEvent*>*)
 {
+	if (const auto objectPrompts = ObjectPrompts::GetSingleton(); objectPrompts->IsActive()) {
+		objectPrompts->Update();
+		return RE::BSEventNotifyControl::kContinue;
+	}
+
 	if (!a_evn) {
 		return RE::BSEventNotifyControl::kContinue;
 	}
@@ -146,6 +153,7 @@ RE::BSEventNotifyControl Manager::ProcessEvent(const RE::TESLoadGameEvent* a_evn
 	
 	SetHotkeyPressed(false);
 	SetHotkeyHeld(false);
+	ObjectPrompts::GetSingleton()->Clear();
 
 	return RE::BSEventNotifyControl::kContinue;
 }
