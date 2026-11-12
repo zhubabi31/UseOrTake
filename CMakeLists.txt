@@ -8,6 +8,7 @@ set(AE_VERSION 1)
 
 option(COPY_BUILD "Copy the build output to the Skyrim directory." TRUE)
 option(BUILD_SKYRIMAE "Build for Skyrim AE" OFF)
+option(BUILD_TESTING "Build focused action label tests." OFF)
 
 # ---- Cache build vars ----
 
@@ -212,6 +213,19 @@ target_precompile_headers(
 	PRIVATE
 		src/PCH.h
 )
+
+if (BUILD_TESTING)
+	enable_testing()
+	add_executable(ActionLabelTests tests/ActionLabelTests.cpp src/Action.cpp)
+	target_compile_features(ActionLabelTests PRIVATE cxx_std_23)
+	target_include_directories(ActionLabelTests PRIVATE
+		${CMAKE_CURRENT_BINARY_DIR}/include
+		${CMAKE_CURRENT_SOURCE_DIR}/src
+	)
+	target_link_libraries(ActionLabelTests PRIVATE ${CommonLibName}::${CommonLibName})
+	target_precompile_headers(ActionLabelTests PRIVATE src/PCH.h)
+	add_test(NAME action-labels COMMAND ActionLabelTests)
+endif()
 
 if (MSVC)
 	target_compile_options(

@@ -21,12 +21,13 @@ public:
 
 private:
 	[[nodiscard]] static RE::NiPointer<RE::TESObjectREFR> GetTarget();
-	void Accept(RE::FormID a_refID, SkyPromptAPI::EventID a_eventID);
+	void HandleEvent(RE::FormID a_refID, SkyPromptAPI::EventID a_eventID, SkyPromptAPI::ActionID a_actionID,
+		SkyPromptAPI::PromptEventType a_type);
 
 	SkyPromptAPI::ClientID clientID{ 0 };
 	SkyPromptAPI::EventID eventID{ 0 };
 	RE::ObjectRefHandle target;
-	std::string label;
+	std::array<std::string, 2> labels;
 	std::vector<SkyPromptAPI::Prompt> prompts;
 	bool crime{ false };
 };

@@ -20,7 +20,8 @@ public:
 	[[nodiscard]] Type GetDefaultAction() const { return static_cast<Type>(action.GetValue()); }
 
 	[[nodiscard]] virtual std::string GetActionLabel(RE::TESObjectREFR* a_activator, RE::TESBoundObject* a_base, bool a_keyPressed, bool a_keyHeld) const;
-	[[nodiscard]] virtual const std::string& GetUseLabel(RE::TESBoundObject* a_base) const;
+	[[nodiscard]] virtual const std::string& GetUseLabel(RE::TESBoundObject* a_base, bool a_secondary = false) const;
+	[[nodiscard]] virtual bool HasSecondaryAction() const { return false; }
 
 	static void Perform(RE::Actor* a_actor, RE::TESBoundObject* a_base, bool a_secondary);
 
@@ -46,7 +47,8 @@ public:
 	~SecondaryAction() override = default;
 
 	[[nodiscard]] std::string GetActionLabel(RE::TESObjectREFR* a_activator, RE::TESBoundObject* a_base, bool a_keyPressed, bool a_keyHeld) const override;
-	[[nodiscard]] const std::string& GetUseLabel(RE::TESBoundObject* a_base) const override;
+	[[nodiscard]] const std::string& GetUseLabel(RE::TESBoundObject* a_base, bool a_secondary = false) const override;
+	[[nodiscard]] bool HasSecondaryAction() const override { return true; }
 
 private:
 	INI::Setting<std::string> secondaryActionLabel;
@@ -59,7 +61,7 @@ public:
 	~AlchemyAction() override = default;
 
 	[[nodiscard]] std::string GetActionLabel(RE::TESObjectREFR* a_activator, RE::TESBoundObject* a_base, bool a_keyPressed, bool a_keyHeld) const override;
-	[[nodiscard]] const std::string& GetUseLabel(RE::TESBoundObject* a_base) const override;
+	[[nodiscard]] const std::string& GetUseLabel(RE::TESBoundObject* a_base, bool a_secondary = false) const override;
 
 private:
 	[[nodiscard]] const std::string& GetLabelForAlchType(RE::TESBoundObject* a_base) const;

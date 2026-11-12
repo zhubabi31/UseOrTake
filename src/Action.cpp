@@ -42,7 +42,7 @@ std::string Action::GetActionLabel(RE::TESObjectREFR* a_activator, RE::TESBoundO
 	return get_take_label(a_activator);
 }
 
-const std::string& Action::GetUseLabel(RE::TESBoundObject*) const
+const std::string& Action::GetUseLabel(RE::TESBoundObject*, bool) const
 {
 	return GetPrimaryLabel();
 }
@@ -92,9 +92,9 @@ std::string SecondaryAction::GetActionLabel(RE::TESObjectREFR* a_activator, RE::
 	return get_take_label(a_activator);
 }
 
-const std::string& SecondaryAction::GetUseLabel(RE::TESBoundObject* a_base) const
+const std::string& SecondaryAction::GetUseLabel(RE::TESBoundObject*, bool a_secondary) const
 {
-	return a_base->Is(RE::FormType::Scroll) ? static_cast<const std::string&>(secondaryActionLabel) : GetPrimaryLabel();
+	return a_secondary ? static_cast<const std::string&>(secondaryActionLabel) : GetPrimaryLabel();
 }
 
 AlchemyAction::AlchemyAction(std::string_view a_section, std::string a_label, std::string a_foodLabel, std::string a_poisonLabel) :
@@ -111,7 +111,7 @@ std::string AlchemyAction::GetActionLabel(RE::TESObjectREFR* a_activator, RE::TE
 	return get_take_label(a_activator);
 }
 
-const std::string& AlchemyAction::GetUseLabel(RE::TESBoundObject* a_base) const
+const std::string& AlchemyAction::GetUseLabel(RE::TESBoundObject* a_base, bool) const
 {
 	return GetLabelForAlchType(a_base);
 }

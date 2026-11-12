@@ -69,8 +69,12 @@ while a separate **Eat** prompt is attached to the cheese wheel. Press the butto
 SkyPrompt directly; modifier + Activate is not required. SkyPrompt manages its keyboard,
 mouse, and gamepad bindings through its own settings.
 
-Armor, weapons, ammo, and carryable torches show **Equip**; ingredients and food show
-**Eat**; drinks show **Drink**; poisons show **Apply**; scrolls show **Read** (cast).
+Armor, ammo, and carryable torches show **Equip**; ingredients and food show **Eat**;
+drinks show **Drink**; poisons show **Apply**. Weapons show both **Equip** and
+**Equip and Draw**; scrolls show both **Equip** and **Read** (cast), as separate
+SkyPrompt action rows. **Take/Steal stays exclusively vanilla**, never in SkyPrompt.
+SkyPrompt assigns its row bindings to these actions; keep those bindings distinct
+from vanilla Activate and from each other. Its theme controls the row layout.
 Existing per-category enable settings and alternate action labels still apply. Stolen
 items have red alternate prompts, and use still goes through normal pickup/activation.
 Prompts are removed when the target is no longer valid or gameplay is blocked by a menu.
@@ -93,6 +97,7 @@ sAlternateActionLabel = Equip
 
 [Weapons]
 sAlternateActionLabel = Equip
+sAlternateSecondaryActionLabel = Equip and Draw
 
 [Potions]
 sAlternateActionLabel = Drink
@@ -103,6 +108,7 @@ sAlternateActionLabelPoison = Apply
 sAlternateActionLabel = Eat
 
 [Scrolls]
+sAlternateActionLabel = Equip
 sAlternateSecondaryActionLabel = Read
 
 [Torches]
@@ -116,15 +122,15 @@ For example, `sAlternateActionLabelFood = Manger` changes the food prompt to Fre
 Non-Latin text requires a SkyPrompt font that contains the language's glyphs.
 SkyPrompt also supports `$LocalizationKeys` for authors supplying its translation files.
 The game's vanilla Take/Steal text and activation button retain the game's own
-localization and control mapping. Scrolls use the original **secondary** label key
-because that is where the original mod stores its Read/cast action.
+localization and control mapping. Both original weapon and scroll alternate labels
+are retained, including the **secondary** label for Equip and Draw / Read.
 
 ### In-game check (repeat on each supported runtime)
 
 With the matching SKSE64, Address Library, and SkyPrompt installed, look at a cheese wheel:
 vanilla **Take** with the mapped activation button and an attached **Eat** prompt should
 both be visible. Activate takes without eating; SkyPrompt's button picks up and eats.
-Also check stolen food, scrolls, gamepad bindings, switching targets, opening menus,
+Also check both alternate weapon/scroll actions, stolen food, gamepad bindings, switching targets, opening menus,
 and loading a save. These UI/input checks require running Skyrim.
 
 ## Building
@@ -155,6 +161,14 @@ SkyPrompt API is fetched through the pinned vcpkg overlay in
 After building AE, run `.\tests\CheckPluginMetadata.ps1` in 64-bit PowerShell to
 check the actual DLL exports, runtime declarations, extender minimum, and Address
 Library flags against the two supplied SKSE versions. This does not start Skyrim.
+
+To check both alternate labels and UTF-8 INI round trips without starting Skyrim:
+
+```
+cmake --preset vs2022-ae -DBUILD_TESTING=ON
+cmake --build --preset vs2022-ae
+ctest --test-dir buildae -C Release --output-on-failure
+```
 
 ## Credits and licensing
 

@@ -74,17 +74,23 @@ void ObjectPrompts::Update()
 	target = ref->GetHandle();
 	crime = isCrime;
 	const auto base = ref->GetBaseObject();
-	label = Manager::GetSingleton()->GetActionForType(base->GetFormType())->GetUseLabel(base);
-	if (label.empty()) {
-		REX::WARN("Empty alternate action label for {:08X}; no SkyPrompt submitted", base->GetFormID());
-		return;
+	const auto action = Manager::GetSingleton()->GetActionForType(base->GetFormType());
+	const SkyPromptAPI::ActionID actionCount = action->HasSecondaryAction() ? 2 : 1;
+	for (SkyPromptAPI::ActionID id = 0; id < actionCount; ++id) {
+		labels[id] = action->GetUseLabel(base, id == 1);
+		if (labels[id].empty()) {
+			REX::WARN("Empty alternate action {} label for {:08X}; no SkyPrompt submitted for this action", id, base->GetFormID());
+			continue;
+		}
+
+		// Separate event IDs keep the alternates on separate rows, not stacked together.
+		++eventID;
+		prompts.emplace_back(labels[id], eventID, id, SkyPromptAPI::kSinglePress, ref->GetFormID(),
+			std::span<const std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>>{},
+			crime ? 0xFF0000FF : 0xFFFFFFFF);
 	}
 
-	++eventID;
-	prompts.emplace_back(label, eventID, 0, SkyPromptAPI::kSinglePress, ref->GetFormID(),
-		std::span<const std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>>{},
-		crime ? 0xFF0000FF : 0xFFFFFFFF);
-	if (!SkyPromptAPI::SendPrompt(this, clientID)) {
+	if (!prompts.empty() && !SkyPromptAPI::SendPrompt(this, clientID)) {
 		REX::ERROR("Failed to submit SkyPrompt for {:08X}", ref->GetFormID());
 	}
 }
@@ -96,7 +102,9 @@ void ObjectPrompts::Clear()
 		prompts.clear();
 	}
 	target.reset();
-	label.clear();
+	for (auto& label : labels) {
+		label.clear();
+	}
 }
 
 std::span<const SkyPromptAPI::Prompt> ObjectPrompts::GetPrompts() const
@@ -106,21 +114,33 @@ std::span<const SkyPromptAPI::Prompt> ObjectPrompts::GetPrompts() const
 
 void ObjectPrompts::ProcessEvent(SkyPromptAPI::PromptEvent a_event) const
 {
-	if (a_event.type != SkyPromptAPI::kAccepted || a_event.prompt.actionID != 0) {
+	if ((a_event.type != SkyPromptAPI::kAccepted && a_event.type != SkyPromptAPI::kTimingOut &&
+			a_event.type != SkyPromptAPI::kTimeout) || a_event.prompt.actionID > 1) {
 		return;
 	}
 
 	// SkyPrompt callbacks may run off-thread; revalidate the target on the game thread.
-	SKSE::GetTaskInterface()->AddTask([refID = a_event.prompt.refid, id = a_event.prompt.eventID]() {
-		GetSingleton()->Accept(refID, id);
+	SKSE::GetTaskInterface()->AddTask([refID = a_event.prompt.refid, id = a_event.prompt.eventID,
+										 actionID = a_event.prompt.actionID, type = a_event.type]() {
+		GetSingleton()->HandleEvent(refID, id, actionID, type);
 	});
 }
 
-void ObjectPrompts::Accept(RE::FormID a_refID, SkyPromptAPI::EventID a_eventID)
+void ObjectPrompts::HandleEvent(RE::FormID a_refID, SkyPromptAPI::EventID a_eventID, SkyPromptAPI::ActionID a_actionID,
+	SkyPromptAPI::PromptEventType a_type)
 {
+	const auto submitted = std::ranges::any_of(prompts, [&](const auto& prompt) {
+		return prompt.eventID == a_eventID && prompt.actionID == a_actionID && prompt.refid == a_refID;
+	});
 	const auto ref = GetTarget();
-	if (prompts.empty() || a_eventID != eventID || !ref ||
+	if (!submitted || !ref ||
 		ref->GetFormID() != a_refID || target != ref->GetHandle()) {
+		return;
+	}
+
+	if (a_type != SkyPromptAPI::kAccepted) {
+		// A queued sink returns false even when refreshed. Keep both rows alive while targeted.
+		(void)SkyPromptAPI::SendPrompt(this, clientID);
 		return;
 	}
 
@@ -136,5 +156,5 @@ void ObjectPrompts::Accept(RE::FormID a_refID, SkyPromptAPI::EventID a_eventID)
 		return;
 	}
 
-	Action::Perform(player, base, base->Is(RE::FormType::Scroll));
+	Action::Perform(player, base, a_actionID == 1);
 }
